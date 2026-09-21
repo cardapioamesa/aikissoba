@@ -79,6 +79,15 @@
     transition:color .18s ease,background .18s ease,border-color .18s ease;
   }
   .tabs a:hover{color:var(--rice)}
+
+  /* so aparece para a conta com acesso de edicao (conferido pelo servidor) */
+  .btn-dono{
+    flex:0 0 auto;margin-left:6px;
+    background:none;border:1px solid rgba(233,197,121,.45);color:var(--dashi);
+    font:inherit;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    padding:7px 13px;border-radius:999px;cursor:pointer;white-space:nowrap;
+  }
+  .btn-dono:hover{background:rgba(233,197,121,.1)}
   .tabs a[aria-current="true"]{color:var(--ink);background:var(--dashi);border-color:var(--dashi)}
 
 
@@ -445,6 +454,7 @@
       <b id="marca-nome">AIKISSOBA</b>
     </a>
     <nav class="tabs" id="tabs" aria-label="Seções do cardápio"></nav>
+    <button class="btn-dono" id="abrir-admin" type="button" hidden>Área do dono</button>
   </div>
 </header>
 
@@ -1255,6 +1265,7 @@
   });
 
   document.getElementById("fechar-admin").addEventListener("click", () => { renderCliente(); fecharAdmin(); });
+  document.getElementById("abrir-admin").addEventListener("click", abrirAdmin);
 
   window.addEventListener("beforeunload", e => {
     if (sujo && !publicando){ e.preventDefault(); e.returnValue = ""; }
@@ -1270,6 +1281,12 @@
         artifact = a;
         // sem identidade nesta visualização, deixa tentar: o servidor decide
         podePublicar = u ? await u.canEdit() : !!artifact;
+        // A porta do painel so aparece para quem o servidor confirma que pode
+        // editar a pagina. Cliente, visitante de link publico ou conta sem
+        // acesso de edicao nunca veem o botao. O #admin no endereco nao serve
+        // de porta aqui: a pagina roda dentro de uma moldura e o # de fora
+        // nao chega ate ela.
+        if (u && await u.canEdit()) document.getElementById("abrir-admin").hidden = false;
       } catch (e) { /* visitante comum: segue só com o cardápio */ }
     }
 
