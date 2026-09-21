@@ -7,11 +7,11 @@
 window.CARDAPIO_CONFIG = {
   restaurante: "aikissoba",
   firebase: {
-    apiKey: "COLE_AQUI",
-    authDomain: "COLE_AQUI",
-    projectId: "COLE_AQUI",
-    storageBucket: "COLE_AQUI",
-    messagingSenderId: "COLE_AQUI",
-    appId: "COLE_AQUI"
+    apiKey: "AIzaSyCO4jXgsyp990Q-2JvI8Aw-zBn9le7oPL0",
+    authDomain: "cardapio-a-mesa.firebaseapp.com",
+    projectId: "cardapio-a-mesa",
+    storageBucket: "cardapio-a-mesa.firebasestorage.app",
+    messagingSenderId: "589264581265",
+    appId: "1:589264581265:web:49e706338d78a1aff28530"
   }
 };
