@@ -1231,6 +1231,12 @@
 
     try { destravado = sessionStorage.getItem("aikissoba:destravado") === "1"; } catch (e) {}
 
+    // Fora da plataforma (ex.: a cópia no GitHub Pages) não há onde salvar,
+    // então o painel nem abre. Localhost fica liberado para testes.
+    const naPlataforma = !!(window.claude && typeof window.claude.use === "function");
+    const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+    if (!naPlataforma && !local) return;
+
     let reabrir = false;
     try {
       reabrir = sessionStorage.getItem("aikissoba:admin") === "1";

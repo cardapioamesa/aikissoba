@@ -110,18 +110,28 @@ def main():
     modelo_b64 = base64.b64encode(modelo.encode("utf-8")).decode()
     dados_json = json.dumps(montar_dados(), ensure_ascii=False).replace("</", "<\\/")
 
-    # a semente publicada pela ferramenta nao leva doctype/head proprios
+    # Duas saidas a partir do mesmo modelo:
+    #  - index.html: documento completo (doctype, charset, viewport). E o que o
+    #    GitHub Pages serve direto, sem ninguem acrescentar cabecalho.
+    #  - semente-artifact.html: so o corpo. A ferramenta de artifacts do Claude
+    #    embrulha o arquivo no proprio cabecalho e recusa doctype/head nossos.
+    completo = modelo.replace("__TPL__", modelo_b64, 1).replace("__DADOS__", dados_json, 1)
     semente = corpo.replace("__TPL__", modelo_b64).replace("__DADOS__", dados_json)
 
-    saida = os.path.join(BASE, "index.html")
-    open(saida, "w", encoding="utf-8").write(semente)
+    saidas = {"index.html": completo, "semente-artifact.html": semente}
+    for nome, conteudo in saidas.items():
+        open(os.path.join(BASE, nome), "w", encoding="utf-8").write(conteudo)
 
     kb = lambda n: f"{n/1024:.0f} KB"
     print("modelo   ", kb(len(modelo.encode())))
     print("dados    ", kb(len(dados_json.encode())))
-    print("publicado", kb(os.path.getsize(saida)))
+    for nome in saidas:
+        print(f"{nome:<22}", kb(os.path.getsize(os.path.join(BASE, nome))))
     assert "__TPL__" in modelo and "__DADOS__" in modelo, "o modelo perdeu os marcadores"
-    assert "__TPL__" not in semente and "__DADOS__" not in semente, "a semente ficou com marcador"
+    for nome, conteudo in saidas.items():
+        assert "__TPL__" not in conteudo and "__DADOS__" not in conteudo, f"{nome} ficou com marcador"
+    assert completo.lstrip().lower().startswith("<!doctype html>"), "index.html sem doctype"
+    assert 'name="viewport"' in completo, "index.html sem viewport"
     print("ok")
 
 
