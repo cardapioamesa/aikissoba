@@ -93,6 +93,7 @@
     return `<div class="drink${it.esgotado ? " fora" : ""}">
       ${garrafa}
       <span class="drink-name">${esc(it.nome)}</span>
+      ${it.esgotado ? `<span class="selo-esgotado selo-bebida">Esgotado hoje</span>` : ""}
       <span class="dots"></span>
       <span class="drink-price"><small>R$</small>${esc(it.preco)}</span>
     </div>`;
