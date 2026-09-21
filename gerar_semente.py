@@ -1,14 +1,17 @@
-# Monta o cardapio: embute as fotos, o logo e uma copia do proprio modelo,
-# para que o painel do administrador consiga republicar a pagina inteira.
+# Gera semente.js: o cardápio inicial da Aikissoba (textos, seções, pratos e
+# fotos) que a página semear.html grava no Firestore uma única vez.
+#
+# Tudo aqui já é público — é o próprio cardápio. Nenhum e-mail ou senha entra
+# neste arquivo: os e-mails dos donos são digitados na hora, em semear.html.
 import base64, io, json, os
 from PIL import Image
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-IMG  = os.path.join(BASE, "img")
-URL_PUBLICA = "https://claude.ai/artifact/83tFxNo3e18tCFnkDLPRPH"
+IMG = os.path.join(BASE, "img")
+URL_PUBLICA = "https://cardapioamesa.github.io/aikissoba/"
 
 
-def data_uri(nome, lado=340, q=76):
+def foto_prato(nome, lado=340, q=76):
     im = Image.open(os.path.join(IMG, nome)).convert("RGB")
     if im.size != (lado, lado):
         im = im.resize((lado, lado), Image.LANCZOS)
@@ -17,8 +20,8 @@ def data_uri(nome, lado=340, q=76):
     return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
 
 
-def garrafa_uri(nome, altura=160):
-    """bebidas: recorte com fundo transparente, em WebP (mantem a transparencia e pesa pouco)"""
+def foto_garrafa(nome, altura=160):
+    """bebidas: recorte com fundo transparente, em WebP"""
     im = Image.open(os.path.join(IMG, nome)).convert("RGBA")
     im = im.resize((max(1, round(im.width * altura / im.height)), altura), Image.LANCZOS)
     buf = io.BytesIO()
@@ -26,11 +29,11 @@ def garrafa_uri(nome, altura=160):
     return "data:image/webp;base64," + base64.b64encode(buf.getvalue()).decode()
 
 
-def foto_uri(nome):
-    return garrafa_uri(nome) if nome.endswith(".png") else data_uri(nome)
+def foto(nome):
+    return foto_garrafa(nome) if nome.endswith(".png") else foto_prato(nome)
 
 
-def logo_uri(lado=220):
+def logo(lado=220):
     im = Image.open(os.path.join(IMG, "logo.png")).convert("RGB").resize((lado, lado), Image.LANCZOS)
     buf = io.BytesIO()
     im.save(buf, "JPEG", quality=88, optimize=True)
@@ -57,9 +60,9 @@ ITENS = [
     ("yaki-camarao", "yakisoba", "Yakisoba de Camarão", "Camarão, legumes e verduras, macarrão e molho de yakisoba especial.", "38", "", "yaki-camarao.jpg"),
     ("yaki-legumes", "yakisoba", "Yakisoba de Legumes", "Legumes e verduras, macarrão e molho de yakisoba especial.",          "28", "", "yaki-legumes.jpg"),
 
-    ("lamen-shoyu",  "lamen", "Shoyu Lámen",   "Caldo à base de frango, temperado com preparado de shoyu.",                              "40", "", "lamen-shoyu.jpg"),
-    ("lamen-misso",  "lamen", "Missô Lámen",   "Caldo à base de frango, temperado com pasta de missô preparado.",                        "40", "", "lamen-misso.jpg"),
-    ("lamen-kimchi", "lamen", "Kinmchi Lámen", "Caldo à base de frango com pasta de missô preparado e acrescido de kinmuchi.",            "50", "", "lamen-kimchi.jpg"),
+    ("lamen-shoyu",  "lamen", "Shoyu Lámen",   "Caldo à base de frango, temperado com preparado de shoyu.",                   "40", "", "lamen-shoyu.jpg"),
+    ("lamen-misso",  "lamen", "Missô Lámen",   "Caldo à base de frango, temperado com pasta de missô preparado.",             "40", "", "lamen-misso.jpg"),
+    ("lamen-kimchi", "lamen", "Kinmchi Lámen", "Caldo à base de frango com pasta de missô preparado e acrescido de kinmuchi.", "50", "", "lamen-kimchi.jpg"),
 
     ("porc-guiouza",  "porcoes", "Guiouza",    "Pastelzinho japonês, cozido no vapor, com uma crosta crocante.",        "25", "5 unidades · porco com nirá ou legumes", "porc-guiouza.jpg"),
     ("porc-karaague", "porcoes", "Karaague",   "Frango frito japonês, temperado com uma marinada especial.",            "30", "5 unidades", "porc-karaague.jpg"),
@@ -79,73 +82,28 @@ ITENS = [
 ]
 
 
-def montar_dados():
-    return {
+def main():
+    semente = {
+        "restaurante": "aikissoba",
         "site": {
             "nome": "AIKISSOBA",
             "chamada": "Macarrão na chapa, caldo fumegante e o molho especial, receita da família — servido como em casa.",
             "url": URL_PUBLICA,
             "whatsapp": "", "instagram": "", "endereco": "", "horario": "",
-            # acesso do painel: definido pelo proprio dono, no navegador
-            "admUser": "", "admSal": "", "admHash": "",
-            "logo": logo_uri(),
+            "logo": logo(),
         },
-        "secoes": [
-            {"id": i, "nome": n, "kanji": k, "estilo": e, "nota": nota}
-            for i, n, k, e, nota in SECOES
-        ],
-        "itens": [
-            {"id": i, "secao": s, "nome": n, "desc": d, "preco": p, "tag": t,
-             "foto": foto_uri(f) if f else "", "esgotado": False}
-            for i, s, n, d, p, t, f in ITENS
-        ],
+        "secoes": [{"id": i, "nome": n, "kanji": k, "estilo": e, "nota": nota} for i, n, k, e, nota in SECOES],
+        "itens": [{"id": i, "secao": s, "nome": n, "desc": d, "preco": p, "tag": t,
+                   "foto": foto(f) if f else "", "esgotado": False}
+                  for i, s, n, d, p, t, f in ITENS],
     }
-
-
-def main():
-    corpo = open(os.path.join(BASE, "corpo.html"), encoding="utf-8").read()
-
-    # o cabecalho (titulo + fontes) vai para o <head> do documento completo
-    for marca in ("__TPL__", "__DADOS__"):
-        n = corpo.count(marca)
-        assert n == 1, f"{marca} aparece {n}x em corpo.html (tem que ser 1)"
-
-    corte = corpo.index("<style>")
-    cabeca, miolo = corpo[:corte].strip(), corpo[corte:]
-
-    modelo = (
-        "<!doctype html>\n<html lang=\"pt-BR\">\n<head>\n"
-        "<meta charset=\"utf-8\">\n"
-        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n"
-        + cabeca + "\n</head>\n<body>\n" + miolo + "\n</body>\n</html>\n"
-    )
-
-    modelo_b64 = base64.b64encode(modelo.encode("utf-8")).decode()
-    dados_json = json.dumps(montar_dados(), ensure_ascii=False).replace("</", "<\\/")
-
-    # Duas saidas a partir do mesmo modelo:
-    #  - index.html: documento completo (doctype, charset, viewport). E o que o
-    #    GitHub Pages serve direto, sem ninguem acrescentar cabecalho.
-    #  - semente-artifact.html: so o corpo. A ferramenta de artifacts do Claude
-    #    embrulha o arquivo no proprio cabecalho e recusa doctype/head nossos.
-    completo = modelo.replace("__TPL__", modelo_b64, 1).replace("__DADOS__", dados_json, 1)
-    semente = corpo.replace("__TPL__", modelo_b64).replace("__DADOS__", dados_json)
-
-    saidas = {"index.html": completo, "semente-artifact.html": semente}
-    for nome, conteudo in saidas.items():
-        open(os.path.join(BASE, nome), "w", encoding="utf-8").write(conteudo)
-
-    kb = lambda n: f"{n/1024:.0f} KB"
-    print("modelo   ", kb(len(modelo.encode())))
-    print("dados    ", kb(len(dados_json.encode())))
-    for nome in saidas:
-        print(f"{nome:<22}", kb(os.path.getsize(os.path.join(BASE, nome))))
-    assert "__TPL__" in modelo and "__DADOS__" in modelo, "o modelo perdeu os marcadores"
-    for nome, conteudo in saidas.items():
-        assert "__TPL__" not in conteudo and "__DADOS__" not in conteudo, f"{nome} ficou com marcador"
-    assert completo.lstrip().lower().startswith("<!doctype html>"), "index.html sem doctype"
-    assert 'name="viewport"' in completo, "index.html sem viewport"
-    print("ok")
+    texto = "// Gerado por gerar_semente.py. Nao edite a mao.\nwindow.SEMENTE = " + \
+            json.dumps(semente, ensure_ascii=False) + ";\n"
+    saida = os.path.join(BASE, "semente.js")
+    io.open(saida, "w", encoding="utf-8").write(texto)
+    maior = max(len(json.dumps(i)) for i in semente["itens"])
+    print(f"semente.js {os.path.getsize(saida)//1024} KB | {len(semente['itens'])} itens | "
+          f"maior item {maior//1024} KB (limite do Firestore: 1024 KB por documento)")
 
 
 if __name__ == "__main__":

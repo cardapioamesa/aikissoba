@@ -1,63 +1,62 @@
 # Cardápio digital — Aikissoba
 
-Cardápio online da Aikissoba, com painel de administração embutido na própria página.
+Cardápio online da Aikissoba, feito pelo **Cardápio à Mesa**. O cliente abre pelo
+QR Code da mesa ou pelo link da bio; o dono atualiza pelo celular, na
+**Área do dono**, com e-mail e senha.
 
-**Página publicada:** https://claude.ai/artifact/83tFxNo3e18tCFnkDLPRPH
+**Endereço:** https://cardapioamesa.github.io/aikissoba/
 
-- **Link do cliente:** a URL acima, limpa. Não tem nenhum vestígio do painel.
-- **Link do administrador:** a mesma URL com `#admin` no fim. Pede usuário e senha.
+## Como funciona
 
-São a mesma página: o que o administrador publica é o que o cliente passa a ver.
+A página é estática (GitHub Pages) e busca o cardápio no **Firebase Firestore**.
+O dono entra com e-mail e senha do **Firebase Auth**, edita no painel e clica em
+**Publicar**: a mudança vai para o banco e aparece na hora para quem está com o
+cardápio aberto.
 
-## Como a página se atualiza sozinha
+| Arquivo | O que é |
+|---|---|
+| `index.html` | A página: estilo e estrutura |
+| `app.js` | Lê o cardápio, desenha a página, painel do dono e publicação |
+| `config.js` | Qual restaurante e qual projeto do Firebase |
+| `firestore.rules` | Quem pode ler e escrever — colar no console do Firebase |
+| `semear.html` + `semente.js` | Carga inicial do cardápio no banco (uma vez, pelo administrador) |
+| `gerar_semente.py` | Gera o `semente.js` a partir das fotos em `img/` |
 
-A página guarda uma cópia do próprio modelo, em base64, dentro de
-`<script type="text/plain" id="tpl">`, com dois marcadores: `__TPL__` e `__DADOS__`.
-Quando o dono clica em **Publicar**, o JavaScript decodifica esse modelo, encaixa a
-cópia do modelo e os dados novos, e manda o documento inteiro de volta pela API
-`artifact.publish()`. A versão nova vira a página que todo mundo abre.
+### Onde ficam os dados
 
-Por isso o código monta os marcadores em pedaços:
-
-```js
-const MARCA_TPL = "__" + "TPL" + "__";
+```
+restaurantes/aikissoba                 textos, seções, logo         leitura pública
+restaurantes/aikissoba/itens/{id}      um prato por documento       leitura pública
+restaurantes/aikissoba/privado/acesso  e-mails de quem pode editar  só dono e administrador
 ```
 
-Se eles aparecessem inteiros no arquivo, o `build.py` os substituiria também e a
-página perderia a capacidade de se reconstruir.
+As fotos ficam dentro do próprio documento do prato, já comprimidas (a maior tem
+uns 30 KB; o limite do Firestore é 1 MB por documento). Isso evita o Cloud
+Storage, que em projeto novo exige o plano pago.
 
-Todas as fotos e o logotipo são **data URIs dentro do HTML**. Nada de arquivo
-separado: o dono nunca perde imagem ao republicar.
+## Segurança
 
-## Quem pode alterar o cardápio
+- Quem confere a senha é o servidor do Google, não a página.
+- Quem pode gravar é decidido pelas **regras do Firestore**, no servidor: só os
+  e-mails da lista `privado/acesso` daquele restaurante, e o administrador.
+  Mesmo que alguém abra o painel mexendo no código, o banco recusa a gravação.
+- Os e-mails dos donos ficam num documento que ninguém de fora consegue ler.
+- O `config.js` **não é segredo**: identifica o projeto, como em qualquer site
+  que usa Firebase.
+- A criação de conta pelo próprio usuário fica **desligada** no console: só
+  existem as contas que o administrador cadastra.
+- Nenhum dado pessoal entra neste repositório (ele é público). O administrador é
+  identificado nas regras pelo UID, um código opaco do Firebase.
 
-Duas camadas, e só uma delas é segurança de verdade:
+## Novo restaurante
 
-1. **Acesso de edição à página** — conferido no servidor. Quem não tem, tem a
-   publicação recusada, mesmo abrindo o painel. **É isso que protege o cardápio.**
-2. **Usuário e senha** — guardados como resumo SHA-256 com sal, nunca em texto.
-   Servem para manter o painel fora da vista de quem abrir o link de administração.
-   Não são um cofre: quem lê o código-fonte vê o resumo. Quem tem acesso de edição
-   pode redefinir a senha pela própria tela de entrada, caso esqueça.
+1. Novo repositório na organização, com o nome do restaurante (`pizzaria-do-ze`).
+2. Copiar estes arquivos, trocar `restaurante` no `config.js` e as fotos em `img/`.
+3. Configurar a autoria só naquele repositório, antes do primeiro commit:
+   `git config --local user.name "Cardápio à Mesa"` e
+   `git config --local user.email "cardapioamesa@users.noreply.github.com"`.
+4. Gerar o `semente.js`, publicar e carregar pelo `semear.html`.
+5. Cadastrar o login do dono no console e colocar o e-mail dele na carga.
 
-## GitHub Pages
-
-O cardápio do cliente funciona publicado aqui como página estática. **A
-administração não**: fora da plataforma de artifacts não existe `artifact.publish()`,
-então o botão Publicar não tem para onde salvar. Uma cópia no GitHub Pages fica
-congelada no estado do último `build.py`.
-
-Se quiser endereço próprio e administração funcionando ao mesmo tempo, o caminho é
-deixar o GitHub Pages redirecionar para o link acima.
-
-## Desenvolvimento
-
-```bash
-python build.py
-```
-
-Lê `corpo.html`, embute as fotos de `img/`, monta o modelo completo e escreve
-`index.html`. Edite sempre o `corpo.html` — o `index.html` é gerado.
-
-Origem das imagens: as fotos dos pratos e o logotipo foram recortados das cinco
-artes de cardápio da casa (Yakisoba, Lámen, Porções, Especiais, Bebidas).
+O mesmo projeto do Firebase atende todos os restaurantes: as regras separam um
+do outro pelo nome.

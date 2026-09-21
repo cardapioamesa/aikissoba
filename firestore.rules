@@ -1,0 +1,62 @@
+rules_version = '2';
+
+// Regras do projeto do Cardápio à Mesa.
+//
+// Onde colar: console.firebase.google.com > Firestore Database > aba "Regras"
+// > apagar tudo > colar este arquivo > Publicar.
+//
+// Modelo: cada restaurante tem o cardápio público (qualquer um lê) e uma
+// lista privada de e-mails que podem editar. Os e-mails ficam num documento
+// separado justamente para nunca aparecerem para quem só está vendo o cardápio.
+//
+//   restaurantes/{slug}                 cardápio: textos e seções  -> leitura pública
+//   restaurantes/{slug}/itens/{id}      um prato por documento     -> leitura pública
+//   restaurantes/{slug}/privado/acesso  { donos: [e-mails] }       -> só dono e admin
+//
+// Nenhum dado pessoal mora neste arquivo: o administrador é identificado pelo
+// UID, um código opaco que o Firebase gera, e os e-mails dos donos ficam no banco.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function logado(){
+      return request.auth != null;
+    }
+
+    // Administrador do Cardápio à Mesa: cria restaurantes e define os donos.
+    function admin(){
+      return logado() && request.auth.uid in ['COLE_AQUI_O_UID_DO_ADMIN'];
+    }
+
+    function donoDe(slug){
+      let acesso = /databases/$(database)/documents/restaurantes/$(slug)/privado/acesso;
+      return logado()
+        && request.auth.token.email != null
+        && exists(acesso)
+        && request.auth.token.email.lower() in get(acesso).data.donos;
+    }
+
+    match /restaurantes/{slug} {
+      allow read: if true;
+      allow create, delete: if admin();
+      allow update: if admin() || donoDe(slug);
+
+      match /itens/{item} {
+        allow read: if true;
+        allow write: if admin() || donoDe(slug);
+      }
+
+      // Lista de quem pode editar. O dono consegue ler (é assim que o painel
+      // descobre que ele tem acesso), mas só o administrador muda a lista.
+      match /privado/{doc} {
+        allow read: if admin() || donoDe(slug);
+        allow write: if admin();
+      }
+    }
+
+    // Todo o resto é fechado.
+    match /{caminho=**} {
+      allow read, write: if false;
+    }
+  }
+}
