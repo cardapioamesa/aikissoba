@@ -29,11 +29,10 @@ service cloud.firestore {
     }
 
     function donoDe(slug){
-      let acesso = /databases/$(database)/documents/restaurantes/$(slug)/privado/acesso;
       return logado()
         && request.auth.token.email != null
-        && exists(acesso)
-        && request.auth.token.email.lower() in get(acesso).data.donos;
+        && exists(/databases/$(database)/documents/restaurantes/$(slug)/privado/acesso)
+        && request.auth.token.email.lower() in get(/databases/$(database)/documents/restaurantes/$(slug)/privado/acesso).data.donos;
     }
 
     match /restaurantes/{slug} {
