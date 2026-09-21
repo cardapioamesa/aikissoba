@@ -34,6 +34,14 @@ As fotos ficam dentro do próprio documento do prato, já comprimidas (a maior t
 uns 30 KB; o limite do Firestore é 1 MB por documento). Isso evita o Cloud
 Storage, que em projeto novo exige o plano pago.
 
+## Ao publicar uma mudança no código
+
+O GitHub Pages manda o navegador guardar os arquivos por 10 minutos. Ao mexer
+em `app.js` ou `config.js`, **suba o número de versão** nos `<script>` do
+`index.html` (`app.js?v=2` → `app.js?v=3`): com o endereço novo, o navegador
+baixa o arquivo de novo na hora. Mudanças feitas pelo painel do dono não
+precisam disso — elas vêm do banco.
+
 ## Segurança
 
 - Quem confere a senha é o servidor do Google, não a página.
