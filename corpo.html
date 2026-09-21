@@ -230,20 +230,35 @@
 
   /* ---------- bebidas ---------- */
   .drinks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 40px}
-  .drink{display:flex;align-items:baseline;gap:10px;padding:13px 2px;border-top:1px solid var(--line)}
+  .drink{display:flex;align-items:center;gap:12px;padding:11px 2px;border-top:1px solid var(--line)}
   .drink:first-child,.drink:nth-child(2){border-top:0}
   .drink-name{font-size:16px;font-weight:500}
   .drink.fora .drink-name,.drink.fora .drink-price{color:var(--ash-dim)}
   .drink.fora .drink-price{text-decoration:line-through}
+  .drink.fora .garrafa img{filter:grayscale(1) brightness(.55)}
+
+  /* a garrafa no inicio da linha, em pe sobre uma sombra curta */
+  .garrafa{flex:0 0 46px;height:58px;display:grid;place-items:center;position:relative}
+  .garrafa::after{
+    content:"";position:absolute;left:50%;bottom:1px;translate:-50% 0;
+    width:70%;height:6px;border-radius:50%;
+    background:radial-gradient(closest-side,rgba(0,0,0,.65),transparent);
+  }
+  .garrafa.vazia::after{display:none}
+  .garrafa img{
+    max-height:56px;max-width:46px;width:auto;height:auto;position:relative;z-index:1;
+    filter:drop-shadow(0 4px 8px rgba(0,0,0,.45));
+  }
   .dots{
     flex:1;height:1px;
     background-image:radial-gradient(circle, var(--ash-dim) 1px, transparent 1.2px);
-    background-size:6px 1px;background-repeat:repeat-x;opacity:.5;translate:0 -3px;
+    background-size:6px 1px;background-repeat:repeat-x;opacity:.5;
   }
   .drink-price{
     font-family:var(--display);font-weight:700;font-size:17px;color:var(--dashi);
-    font-variant-numeric:tabular-nums;
+    font-variant-numeric:tabular-nums;white-space:nowrap;
   }
+  .drink-price small{font-size:11px;font-weight:500;color:var(--ash-dim);margin-right:3px}
 
   /* ---------- rodapé ---------- */
   footer{
@@ -358,6 +373,8 @@
     background:var(--ink-3);box-shadow:0 0 0 1px rgba(246,239,228,.09);
   }
   .mini.vazia{display:grid;place-items:center;font-family:var(--display);color:var(--beni);font-size:20px}
+  /* garrafas no painel: inteiras, sem recorte redondo */
+  .mini.inteira{object-fit:contain;border-radius:8px;background:transparent;box-shadow:none}
   .linha-corpo{flex:1;min-width:0}
   .linha-nome{display:block;font-weight:700;font-size:15.5px}
   .linha-sub{display:block;color:var(--ash);font-size:13px;margin-top:2px}
@@ -514,6 +531,10 @@
 
   function clonar(o){ return JSON.parse(JSON.stringify(o)); }
   const ACENTOS = new RegExp("[" + String.fromCharCode(0x300) + "-" + String.fromCharCode(0x36f) + "]", "g");
+  const ehLista = secaoId => {
+    const sec = dados.secoes.find(x => x.id === secaoId);
+    return !!(sec && sec.estilo === "lista");
+  };
   const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
   function itensDa(secaoId){
@@ -550,12 +571,18 @@
     </button>`;
   }
 
-  function linhaBebida(it){
+  // comFoto: alguma bebida da secao tem foto. Quem nao tem ganha o espaco vazio,
+  // para os nomes continuarem alinhados.
+  function linhaBebida(it, comFoto){
     const fora = it.esgotado ? " fora" : "";
+    const garrafa = it.foto
+      ? `<span class="garrafa"><img src="${esc(it.foto)}" alt="${esc(it.nome)}" loading="lazy"></span>`
+      : (comFoto ? `<span class="garrafa vazia" aria-hidden="true"></span>` : "");
     return `<div class="drink${fora}">
+      ${garrafa}
       <span class="drink-name">${esc(it.nome)}</span>
       <span class="dots"></span>
-      <span class="drink-price">${esc(it.preco)}</span>
+      <span class="drink-price"><small>R$</small>${esc(it.preco)}</span>
     </div>`;
   }
 
@@ -572,7 +599,10 @@
     document.getElementById("secoes").innerHTML = dados.secoes.map(s => {
       const itens = itensDa(s.id);
       let corpo;
-      if (s.estilo === "lista")      corpo = `<div class="drinks">${itens.map(linhaBebida).join("")}</div>`;
+      if (s.estilo === "lista"){
+        const comFoto = itens.some(i => i.foto);
+        corpo = `<div class="drinks">${itens.map(i => linhaBebida(i, comFoto)).join("")}</div>`;
+      }
       else if (s.estilo === "destaque") corpo = `<div class="specials">${itens.map(cardDestaque).join("")}</div>`;
       else                            corpo = `<div class="dishes two">${itens.map(linhaPrato).join("")}</div>`;
       return `<section id="${esc(s.id)}">
@@ -803,7 +833,7 @@
         <div class="campo largo">
           <label>Foto</label>
           <div class="foto-edit">
-            ${it.foto ? `<img class="mini" id="previa" src="${esc(it.foto)}" alt="">`
+            ${it.foto ? `<img class="mini${ehLista(it.secao) ? " inteira" : ""}" id="previa" src="${esc(it.foto)}" alt="">`
                       : `<span class="mini vazia" id="previa">特</span>`}
             <input type="file" id="arquivo-foto" accept="image/*">
             <button class="bt" type="button" id="escolher-foto">Escolher foto</button>
@@ -851,7 +881,7 @@
       if (!itens.length) html += `<p class="dica">Nenhum item nesta seção ainda.</p>`;
       itens.forEach((it, idx) => {
         html += `<div class="linha-item">
-          ${it.foto ? `<img class="mini" src="${esc(it.foto)}" alt="">` : `<span class="mini vazia">特</span>`}
+          ${it.foto ? `<img class="mini${ehLista(it.secao) ? " inteira" : ""}" src="${esc(it.foto)}" alt="">` : `<span class="mini vazia">特</span>`}
           <span class="linha-corpo">
             <span class="linha-nome">${esc(it.nome)}${it.esgotado ? ' <span style="color:var(--beni-lt);font-size:12px">· esgotado</span>' : ""}</span>
             <span class="linha-sub">R$ ${esc(it.preco)}${it.tag ? " · " + esc(it.tag) : ""}</span>
@@ -966,12 +996,23 @@
   }
 
   /* -------- foto: recorte quadrado + redução -------- */
-  function processarFoto(file){
+  // inteira: para bebidas. Nao corta em quadrado (decapitaria a garrafa) e sai em
+  // PNG, que mantem o fundo transparente de uma foto ja recortada.
+  function processarFoto(file, inteira){
     return new Promise((ok, falhou) => {
       const url = URL.createObjectURL(file);
       const img = new Image();
       img.onload = () => {
         try {
+          if (inteira){
+            const c = document.createElement("canvas");
+            const fator = Math.min(1, 240 / Math.max(img.naturalWidth, img.naturalHeight));
+            c.width = Math.max(1, Math.round(img.naturalWidth * fator));
+            c.height = Math.max(1, Math.round(img.naturalHeight * fator));
+            c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+            ok(c.toDataURL("image/png"));
+            return;
+          }
           const N = 420;
           const c = document.createElement("canvas");
           c.width = N; c.height = N;
@@ -1083,11 +1124,14 @@
       const peso = document.getElementById("peso-foto");
       if (peso) peso.textContent = "Processando…";
       try {
-        fotoPendente = await processarFoto(file);
+        const selSecao = document.querySelector('#form-item [data-campo="secao"]');
+        const inteira = selSecao ? ehLista(selSecao.value) : false;
+        fotoPendente = await processarFoto(file, inteira);
         const p = document.getElementById("previa");
         if (p){
           const img = document.createElement("img");
-          img.className = "mini"; img.id = "previa"; img.src = fotoPendente; img.alt = "";
+          img.className = inteira ? "mini inteira" : "mini";
+          img.id = "previa"; img.src = fotoPendente; img.alt = "";
           p.replaceWith(img);
         }
         if (peso) peso.textContent = Math.round(fotoPendente.length/1400) + " KB aprox.";

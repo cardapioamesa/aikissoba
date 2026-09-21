@@ -17,6 +17,19 @@ def data_uri(nome, lado=340, q=76):
     return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
 
 
+def garrafa_uri(nome, altura=160):
+    """bebidas: recorte com fundo transparente, em WebP (mantem a transparencia e pesa pouco)"""
+    im = Image.open(os.path.join(IMG, nome)).convert("RGBA")
+    im = im.resize((max(1, round(im.width * altura / im.height)), altura), Image.LANCZOS)
+    buf = io.BytesIO()
+    im.save(buf, "WEBP", quality=82, method=6)
+    return "data:image/webp;base64," + base64.b64encode(buf.getvalue()).decode()
+
+
+def foto_uri(nome):
+    return garrafa_uri(nome) if nome.endswith(".png") else data_uri(nome)
+
+
 def logo_uri(lado=220):
     im = Image.open(os.path.join(IMG, "logo.png")).convert("RGB").resize((lado, lado), Image.LANCZOS)
     buf = io.BytesIO()
@@ -57,12 +70,12 @@ ITENS = [
     ("esp-topokki", "especiais", "Topokki 3 Queijos", "Massa feita de arroz glutinoso, mergulhada no molho 3 queijos e acompanhada de cebolinha fresca.", "45", "", "esp-topokki.jpg"),
     ("esp-real",    "especiais", "Topokki Real",      "Massa de arroz glutinoso no molho 3 queijos, acrescida de uma porção de carne grelhada e cebolinhas frescas.", "60", "", None),
 
-    ("beb-coca",      "bebidas", "Coca-cola", "", "7,00",  "", None),
-    ("beb-guaravita", "bebidas", "Guaravita", "", "4,00",  "", None),
-    ("beb-h2o",       "bebidas", "H2O",       "", "8,00",  "", None),
-    ("beb-agua",      "bebidas", "Água",      "", "4,00",  "", None),
-    ("beb-cerveja",   "bebidas", "Cerveja",   "", "12,00", "", None),
-    ("beb-soju",      "bebidas", "Soju",      "", "40,00", "", None),
+    ("beb-coca",      "bebidas", "Coca-cola", "", "7,00",  "", "beb-coca.png"),
+    ("beb-guaravita", "bebidas", "Guaravita", "", "4,00",  "", "beb-guaravita.png"),
+    ("beb-h2o",       "bebidas", "H2O",       "", "8,00",  "", "beb-h2o.png"),
+    ("beb-agua",      "bebidas", "Água",      "", "4,00",  "", "beb-agua.png"),
+    ("beb-cerveja",   "bebidas", "Cerveja",   "", "12,00", "", "beb-cerveja.png"),
+    ("beb-soju",      "bebidas", "Soju",      "", "40,00", "", "beb-soju.png"),
 ]
 
 
@@ -83,7 +96,7 @@ def montar_dados():
         ],
         "itens": [
             {"id": i, "secao": s, "nome": n, "desc": d, "preco": p, "tag": t,
-             "foto": data_uri(f) if f else "", "esgotado": False}
+             "foto": foto_uri(f) if f else "", "esgotado": False}
             for i, s, n, d, p, t, f in ITENS
         ],
     }
