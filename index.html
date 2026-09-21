@@ -295,6 +295,21 @@
   .foot-links{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:22px}
   .fine{margin:26px auto 0;max-width:40ch;color:var(--ash-dim);font-size:12.5px;line-height:1.6}
 
+  /* assinatura de quem fez o cardápio */
+  .assinatura{
+    margin:30px auto 0;padding-top:22px;max-width:240px;
+    border-top:1px solid var(--line);
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+  }
+  .assinatura span{font-size:10.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--ash-dim)}
+  .assinatura img{width:150px;height:auto}
+  .tranca-marca{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    margin:22px 0 0;padding-top:18px;border-top:1px solid var(--line);
+    font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ash-dim);
+  }
+  .tranca-marca img{width:118px;height:auto}
+
   /* ---------- ampliar foto ---------- */
   .lightbox{
     position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:24px;
@@ -503,6 +518,10 @@
     <p class="foot-sub">Yakisoba, lámen e comida coreana</p>
     <div class="foot-links" id="contato"></div>
     <p class="fine">Cardápio sujeito a alteração de itens e preços. As fotos são dos pratos da casa.</p>
+    <div class="assinatura">
+      <span>Cardápio digital por</span>
+      <img src="img/cardapio-a-mesa.webp" alt="Cardápio à Mesa" width="150" height="74" loading="lazy">
+    </div>
   </div>
 </footer>
 
@@ -533,6 +552,7 @@
         <button class="bt" id="tr-voltar" type="button">Voltar ao cardápio</button>
       </div>
       <p class="tranca-nota"><button type="button" id="tr-esqueci">Esqueci a senha</button></p>
+      <p class="tranca-marca">Sistema <img src="img/cardapio-a-mesa.webp" alt="Cardápio à Mesa" width="118" height="58"></p>
     </div>
   </div>
 
