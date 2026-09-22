@@ -292,7 +292,29 @@
     letter-spacing:.16em;margin:0 0 6px;text-indent:.16em;
   }
   .foot-sub{margin:0;color:var(--ash);font-size:14.5px}
-  .foot-links{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:22px}
+  .foot-links{display:flex;flex-direction:column;align-items:center;gap:22px;margin-top:24px}
+
+  /* contato da casa: Instagram, endereço e horário */
+  .infos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;width:100%;max-width:860px}
+  .infos-2{grid-template-columns:repeat(2,minmax(0,1fr));max-width:600px}
+  .infos-1{grid-template-columns:minmax(0,1fr);max-width:320px}
+  .info{
+    display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;
+    padding:20px 16px 18px;border:1px solid var(--line);border-radius:16px;
+    background:rgba(246,239,228,.025);color:var(--rice);text-decoration:none;
+    transition:border-color .18s ease, background .18s ease;
+  }
+  a.info:hover{border-color:rgba(233,197,121,.6);background:rgba(233,197,121,.05)}
+  .info-icone{
+    width:44px;height:44px;border-radius:50%;display:grid;place-items:center;
+    color:var(--dashi);border:1px solid rgba(233,197,121,.4);margin-bottom:3px;
+  }
+  .info-icone svg{width:21px;height:21px}
+  .info-icone.marca{border:0}
+  .info-icone.marca svg{width:30px;height:30px}
+  .info-rotulo{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ash-dim)}
+  .info-valor{font-size:14.5px;line-height:1.5;color:var(--rice);white-space:pre-line;overflow-wrap:anywhere}
+  .info-acao{margin-top:2px;font-size:12.5px;font-weight:700;color:var(--dashi)}
   .fine{margin:26px auto 0;max-width:40ch;color:var(--ash-dim);font-size:12.5px;line-height:1.6}
 
   /* assinatura de quem fez o cardápio */
@@ -303,6 +325,13 @@
   }
   .assinatura span{font-size:10.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--ash-dim)}
   .assinatura img{width:150px;height:auto}
+  .assinatura-insta{
+    display:inline-flex;align-items:center;gap:6px;margin-top:2px;
+    font-size:12.5px;font-weight:700;color:var(--ash);text-decoration:none;
+  }
+  .assinatura-insta svg{width:16px;height:16px;flex:0 0 auto}
+  .assinatura .assinatura-insta span{font-size:12.5px;font-weight:700;letter-spacing:0;text-transform:none;color:inherit}
+  .assinatura-insta:hover{color:var(--dashi)}
   .tranca-marca{
     display:flex;align-items:center;justify-content:center;gap:10px;
     margin:22px 0 0;padding-top:18px;border-top:1px solid var(--line);
@@ -474,6 +503,7 @@
     .dish-name{font-size:17.5px}
     .price{font-size:20px}
     .campos{grid-template-columns:1fr}
+    .infos,.infos-2{grid-template-columns:1fr;max-width:360px}
     .linha-item{flex-wrap:wrap}
     .linha-acoes{width:100%;justify-content:flex-start}
   }
@@ -521,6 +551,7 @@
     <div class="assinatura">
       <span>Cardápio digital por</span>
       <img src="img/cardapio-a-mesa.webp" alt="Cardápio à Mesa" width="150" height="74" loading="lazy">
+      <a class="assinatura-insta" id="assinatura-insta" target="_blank" rel="noopener" hidden></a>
     </div>
   </div>
 </footer>
@@ -575,7 +606,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="config.js?v=2"></script>
-<script src="app.js?v=2"></script>
+<script src="config.js?v=3"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>

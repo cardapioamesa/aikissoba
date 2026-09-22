@@ -6,6 +6,8 @@
 // (firestore.rules), conferidas no servidor.
 window.CARDAPIO_CONFIG = {
   restaurante: "aikissoba",
+  // Instagram do Cardápio à Mesa, embaixo da assinatura no rodapé ("" esconde).
+  assinatura: { instagram: "" },
   firebase: {
     apiKey: "AIzaSyCO4jXgsyp990Q-2JvI8Aw-zBn9le7oPL0",
     authDomain: "cardapio-a-mesa.firebaseapp.com",

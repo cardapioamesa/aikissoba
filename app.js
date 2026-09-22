@@ -51,6 +51,38 @@
     document.getElementById("secoes").innerHTML = `<p class="carregando">${esc(texto)}</p>`;
   }
 
+  /* ---------------- ícones ---------------- */
+  const svg = corpo => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${corpo}</svg>`;
+  // Ícone oficial do Instagram, colorido. Cada cópia ganha um id próprio para o
+  // degradê: com id repetido, uma cópia escondida apagaria o degradê das outras.
+  let nInsta = 0;
+  const instagram = () => {
+    const id = "ig-degrade-" + (++nInsta);
+    return `<svg class="ig" viewBox="0 0 24 24" aria-hidden="true">
+      <defs><radialGradient id="${id}" cx="0.28" cy="1.05" r="1.35">
+        <stop offset="0" stop-color="#FFD600"/><stop offset=".22" stop-color="#FF9A00"/>
+        <stop offset=".45" stop-color="#FF3D57"/><stop offset=".68" stop-color="#E4148E"/>
+        <stop offset="1" stop-color="#7C2BF0"/></radialGradient></defs>
+      <rect width="24" height="24" rx="6.6" fill="url(#${id})"/>
+      <rect x="5.1" y="5.1" width="13.8" height="13.8" rx="4.1" fill="none" stroke="#fff" stroke-width="1.75"/>
+      <circle cx="12" cy="12" r="3.25" fill="none" stroke="#fff" stroke-width="1.75"/>
+      <circle cx="16.25" cy="7.75" r="1.05" fill="#fff"/></svg>`;
+  };
+  const ICONE = {
+    mapa:    svg('<path d="M12 21s-6.5-6.1-6.5-11.2a6.5 6.5 0 0 1 13 0C18.5 14.9 12 21 12 21z"/><circle cx="12" cy="9.8" r="2.4"/>'),
+    relogio: svg('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>')
+  };
+
+  // Instagram de quem fez o cardápio, embaixo da assinatura no rodapé.
+  (function(){
+    const a = document.getElementById("assinatura-insta");
+    const perfil = String((CFG.assinatura && CFG.assinatura.instagram) || "").replace(/^@/, "").trim();
+    if (!a || !perfil) return;
+    a.href = "https://instagram.com/" + encodeURIComponent(perfil);
+    a.innerHTML = instagram() + "<span>@" + esc(perfil) + "</span>";
+    a.hidden = false;
+  })();
+
   /* ---------------- cardápio do cliente ---------------- */
   function foto(it, classe){
     if (it.foto) return `<span class="${classe}"><img src="${esc(it.foto)}" alt="${esc(it.nome)}" loading="lazy"></span>`;
@@ -137,12 +169,24 @@
     if (z.whatsapp) bts.push(`<a class="cta cta-b" href="https://wa.me/${esc(z.whatsapp)}" target="_blank" rel="noopener">Pedir no WhatsApp</a>`);
     document.getElementById("hero-botoes").innerHTML = bts.join("");
 
-    const links = [];
-    if (z.whatsapp) links.push(`<a class="cta cta-a" href="https://wa.me/${esc(z.whatsapp)}" target="_blank" rel="noopener">Pedir no WhatsApp</a>`);
-    if (insta)      links.push(`<a class="cta cta-b" href="https://instagram.com/${esc(insta)}" target="_blank" rel="noopener">@${esc(insta)}</a>`);
-    if (z.endereco) links.push(`<span class="cta cta-b">${esc(z.endereco)}</span>`);
-    if (z.horario)  links.push(`<span class="cta cta-b">${esc(z.horario)}</span>`);
-    document.getElementById("contato").innerHTML = links.join("");
+    let contato = "";
+    if (z.whatsapp) contato += `<a class="cta cta-a" href="https://wa.me/${esc(z.whatsapp)}" target="_blank" rel="noopener">Pedir no WhatsApp</a>`;
+    const cartoes = [];
+    if (insta) cartoes.push(`<a class="info" href="https://instagram.com/${esc(insta)}" target="_blank" rel="noopener">
+        <span class="info-icone marca">${instagram()}</span>
+        <span class="info-rotulo">Instagram</span>
+        <span class="info-valor">@${esc(insta)}</span></a>`);
+    if (z.endereco) cartoes.push(`<a class="info" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(z.endereco)}" target="_blank" rel="noopener">
+        <span class="info-icone">${ICONE.mapa}</span>
+        <span class="info-rotulo">Endereço</span>
+        <span class="info-valor">${esc(z.endereco)}</span>
+        <span class="info-acao">Abrir no Google Maps</span></a>`);
+    if (z.horario) cartoes.push(`<div class="info">
+        <span class="info-icone">${ICONE.relogio}</span>
+        <span class="info-rotulo">Horário</span>
+        <span class="info-valor">${esc(z.horario)}</span></div>`);
+    if (cartoes.length) contato += `<div class="infos infos-${cartoes.length}">${cartoes.join("")}</div>`;
+    document.getElementById("contato").innerHTML = contato;
 
     ligarScrollspy();
   }
@@ -495,7 +539,7 @@
         ${campo("WhatsApp", "site.whatsapp", z.whatsapp, {ajuda:"Só números, com 55 e DDD. Ex.: 5521999998888", placeholder:"5521999998888"})}
         ${campo("Frase de abertura", "site.chamada", z.chamada, {largo:true, area:true})}
         ${campo("Instagram", "site.instagram", z.instagram, {placeholder:"@aikissoba"})}
-        ${campo("Horário", "site.horario", z.horario, {placeholder:"Ter a dom, 18h às 23h"})}
+        ${campo("Horário", "site.horario", z.horario, {largo:true, area:true, ajuda:"Pode usar várias linhas. Ex.: Qua a dom · jantar a partir das 18h (Enter) Sáb e dom · almoço das 11h às 15h"})}
         ${campo("Endereço", "site.endereco", z.endereco, {largo:true})}
       </div>
     </div>`;
