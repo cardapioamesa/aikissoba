@@ -68,18 +68,35 @@
       <circle cx="12" cy="12" r="3.25" fill="none" stroke="#fff" stroke-width="1.75"/>
       <circle cx="16.25" cy="7.75" r="1.05" fill="#fff"/></svg>`;
   };
+  // Ícone do WhatsApp: balão com o telefone, em branco, para ir sobre o verde.
+  const WHATSAPP = `<svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 3.1a8.9 8.9 0 0 0-7.7 13.4L3.1 20.9l4.5-1.2A8.9 8.9 0 1 0 12 3.1z" fill="none" stroke="#fff" stroke-width="1.7" stroke-linejoin="round"/>
+      <path d="M9.2 7.7c.2-.4.4-.4.7-.4h.5c.2 0 .4 0 .5.4l.8 1.9c.1.2.1.4 0 .6l-.5.7c-.1.2-.1.3 0 .5.5.9 1.3 1.7 2.2 2.2.2.1.3.1.5 0l.7-.6c.2-.1.4-.2.6-.1l1.9.9c.2.1.3.3.3.5 0 .6-.3 1.3-.9 1.6-.6.3-1.3.4-2 .2-1.4-.4-2.6-1.2-3.6-2.2s-1.8-2.2-2.2-3.6c-.2-.7-.1-1.4.2-2z" fill="#fff"/></svg>`;
   const ICONE = {
     mapa:    svg('<path d="M12 21s-6.5-6.1-6.5-11.2a6.5 6.5 0 0 1 13 0C18.5 14.9 12 21 12 21z"/><circle cx="12" cy="9.8" r="2.4"/>'),
     relogio: svg('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>')
   };
 
+  // O campo aceita "@perfil", "perfil" ou o link inteiro do perfil. Para o cliente
+  // aparece sempre "@perfil"; o botão abre o link que foi colado, ou o montado a
+  // partir do @. Só aceita endereço do instagram.com, com http(s).
+  function perfilInstagram(valor){
+    const v = String(valor || "").trim();
+    if (!v) return null;
+    const m = v.match(/^(?:https?:\/\/)?(?:www\.)?instagram\.com\/([A-Za-z0-9._]{1,30})\/?(?:[?#].*)?$/i);
+    if (m) return { perfil: m[1], url: /^https?:\/\//i.test(v) ? v : "https://" + v };
+    const h = v.replace(/^@/, "").replace(/\/+$/, "");
+    if (!/^[A-Za-z0-9._]{1,30}$/.test(h)) return null;
+    return { perfil: h, url: "https://www.instagram.com/" + h + "/" };
+  }
+
   // Instagram de quem fez o cardápio, embaixo da assinatura no rodapé.
   (function(){
     const a = document.getElementById("assinatura-insta");
-    const perfil = String((CFG.assinatura && CFG.assinatura.instagram) || "").replace(/^@/, "").trim();
-    if (!a || !perfil) return;
-    a.href = "https://instagram.com/" + encodeURIComponent(perfil);
-    a.innerHTML = instagram() + "<span>@" + esc(perfil) + "</span>";
+    const ig = perfilInstagram(CFG.assinatura && CFG.assinatura.instagram);
+    if (!a || !ig) return;
+    a.href = ig.url;
+    a.innerHTML = instagram() + "<span>@" + esc(ig.perfil) + "</span>";
     a.hidden = false;
   })();
 
@@ -163,7 +180,7 @@
       </section>`;
     }).join("");
 
-    const insta = String(z.instagram || "").replace(/^@/, "");
+    const ig = perfilInstagram(z.instagram);
     const bts = [];
     if (dados.secoes[0]) bts.push(`<a class="cta cta-a" href="#${esc(dados.secoes[0].id)}">Ver o cardápio</a>`);
     if (z.whatsapp) bts.push(`<a class="cta cta-b" href="https://wa.me/${esc(z.whatsapp)}" target="_blank" rel="noopener">Pedir no WhatsApp</a>`);
@@ -172,8 +189,8 @@
     // WhatsApp e Instagram são ações de tocar e ir: ficam juntos, como botões.
     // Endereço e horário são informação: ficam nos cartões.
     let acoes = "";
-    if (z.whatsapp) acoes += `<a class="cta cta-a" href="https://wa.me/${esc(z.whatsapp)}" target="_blank" rel="noopener">Pedir no WhatsApp</a>`;
-    if (insta) acoes += `<a class="cta cta-b cta-insta" href="https://instagram.com/${esc(insta)}" target="_blank" rel="noopener">${instagram()}<span>@${esc(insta)}</span></a>`;
+    if (z.whatsapp) acoes += `<a class="cta-whats" href="https://wa.me/${esc(z.whatsapp)}" target="_blank" rel="noopener" aria-label="Pedir pelo WhatsApp" title="Pedir pelo WhatsApp">${WHATSAPP}</a>`;
+    if (ig) acoes += `<a class="cta cta-insta" href="${esc(ig.url)}" target="_blank" rel="noopener" aria-label="Instagram: @${esc(ig.perfil)}">${instagram()}<span>@${esc(ig.perfil)}</span></a>`;
     let contato = acoes ? `<div class="acoes">${acoes}</div>` : "";
     const cartoes = [];
     if (z.endereco) cartoes.push(`<a class="info" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(z.endereco)}" target="_blank" rel="noopener">
@@ -538,7 +555,7 @@
         ${campo("Nome", "site.nome", z.nome)}
         ${campo("WhatsApp", "site.whatsapp", z.whatsapp, {ajuda:"Só números, com 55 e DDD. Ex.: 5521999998888", placeholder:"5521999998888"})}
         ${campo("Frase de abertura", "site.chamada", z.chamada, {largo:true, area:true})}
-        ${campo("Instagram", "site.instagram", z.instagram, {placeholder:"@aikissoba"})}
+        ${campo("Instagram", "site.instagram", z.instagram, {placeholder:"@aikissoba", ajuda:"Pode colar o link do perfil ou escrever só o @."})}
         ${campo("Horário", "site.horario", z.horario, {largo:true, area:true, ajuda:"Pode usar várias linhas. Ex.: Qua a dom · jantar a partir das 18h (Enter) Sáb e dom · almoço das 11h às 15h"})}
         ${campo("Endereço", "site.endereco", z.endereco, {largo:true})}
       </div>

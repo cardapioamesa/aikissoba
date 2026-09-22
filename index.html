@@ -310,9 +310,28 @@
     color:var(--dashi);border:1px solid rgba(233,197,121,.4);margin-bottom:3px;
   }
   .info-icone svg{width:21px;height:21px}
-  .acoes{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
-  .cta-insta{gap:10px}
+  .acoes{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center}
+  /* Instagram: fundo escuro com contorno no degradê da marca */
+  .cta-insta{
+    gap:10px;color:var(--rice);
+    border:1.5px solid transparent;
+    background:
+      linear-gradient(var(--ink-2), var(--ink-2)) padding-box,
+      linear-gradient(120deg, #FFD600, #FF7A00 28%, #FF2D6B 55%, #D4148E 75%, #7C2BF0) border-box;
+    transition:transform .18s ease, box-shadow .18s ease;
+  }
+  .cta-insta:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(228,20,142,.28)}
   .cta-insta svg{width:20px;height:20px;flex:0 0 auto}
+  /* WhatsApp: só o ícone, num círculo verde da mesma altura do botão do Instagram */
+  .cta-whats{
+    width:48px;height:48px;border-radius:50%;flex:0 0 auto;
+    display:grid;place-items:center;background:#25D366;
+    box-shadow:0 8px 22px rgba(37,211,102,.28);
+    transition:transform .18s ease, box-shadow .18s ease;
+  }
+  .cta-whats:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(37,211,102,.4)}
+  .cta-whats svg{width:26px;height:26px}
+  .cta-insta span{letter-spacing:.01em}
   .info-rotulo{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ash-dim)}
   .info-valor{font-size:14.5px;line-height:1.5;color:var(--rice);white-space:pre-line;overflow-wrap:anywhere}
   .info-acao{margin-top:2px;font-size:12.5px;font-weight:700;color:var(--dashi)}
@@ -608,6 +627,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="config.js?v=3"></script>
-<script src="app.js?v=4"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>
