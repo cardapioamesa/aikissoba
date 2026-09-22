@@ -169,13 +169,13 @@
     if (z.whatsapp) bts.push(`<a class="cta cta-b" href="https://wa.me/${esc(z.whatsapp)}" target="_blank" rel="noopener">Pedir no WhatsApp</a>`);
     document.getElementById("hero-botoes").innerHTML = bts.join("");
 
-    let contato = "";
-    if (z.whatsapp) contato += `<a class="cta cta-a" href="https://wa.me/${esc(z.whatsapp)}" target="_blank" rel="noopener">Pedir no WhatsApp</a>`;
+    // WhatsApp e Instagram são ações de tocar e ir: ficam juntos, como botões.
+    // Endereço e horário são informação: ficam nos cartões.
+    let acoes = "";
+    if (z.whatsapp) acoes += `<a class="cta cta-a" href="https://wa.me/${esc(z.whatsapp)}" target="_blank" rel="noopener">Pedir no WhatsApp</a>`;
+    if (insta) acoes += `<a class="cta cta-b cta-insta" href="https://instagram.com/${esc(insta)}" target="_blank" rel="noopener">${instagram()}<span>@${esc(insta)}</span></a>`;
+    let contato = acoes ? `<div class="acoes">${acoes}</div>` : "";
     const cartoes = [];
-    if (insta) cartoes.push(`<a class="info" href="https://instagram.com/${esc(insta)}" target="_blank" rel="noopener">
-        <span class="info-icone marca">${instagram()}</span>
-        <span class="info-rotulo">Instagram</span>
-        <span class="info-valor">@${esc(insta)}</span></a>`);
     if (z.endereco) cartoes.push(`<a class="info" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(z.endereco)}" target="_blank" rel="noopener">
         <span class="info-icone">${ICONE.mapa}</span>
         <span class="info-rotulo">Endereço</span>
