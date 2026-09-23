@@ -17,6 +17,7 @@ cardápio aberto.
 |---|---|
 | `index.html` | A página: estilo e estrutura |
 | `app.js` | Lê o cardápio, desenha a página, painel do dono e publicação |
+| `mesa.js` + `mesa.css` | Pedido na mesa: comanda, painel de pedidos, mesas e caixa |
 | `config.js` | Qual restaurante e qual projeto do Firebase |
 | `firestore.rules` | Quem pode ler e escrever — colar no console do Firebase |
 | `semear.html` + `semente.js` | Carga inicial do cardápio no banco (uma vez, pelo administrador) |
@@ -25,19 +26,46 @@ cardápio aberto.
 ### Onde ficam os dados
 
 ```
-restaurantes/aikissoba                 textos, seções, logo         leitura pública
-restaurantes/aikissoba/itens/{id}      um prato por documento       leitura pública
-restaurantes/aikissoba/privado/acesso  e-mails de quem pode editar  só dono e administrador
+restaurantes/aikissoba                          textos, seções, logo         leitura pública
+restaurantes/aikissoba/itens/{id}               um prato por documento       leitura pública
+restaurantes/aikissoba/mesas/{id}               uma mesa por documento       leitura pública
+restaurantes/aikissoba/comandas/{id}            a conta aberta de uma mesa   ver abaixo
+restaurantes/aikissoba/comandas/{id}/rodadas/…  cada pedido daquela mesa     ver abaixo
+restaurantes/aikissoba/privado/acesso           e-mails de quem pode editar  só dono e administrador
 ```
 
 As fotos ficam dentro do próprio documento do prato, já comprimidas (a maior tem
 uns 30 KB; o limite do Firestore é 1 MB por documento). Isso evita o Cloud
 Storage, que em projeto novo exige o plano pago.
 
+## Pedido na mesa
+
+O cliente abre o QR da mesa (`.../?mesa=3`), pede pelo celular e o pedido cai no
+painel do dono, que confirma. **Uma comanda por mesa**: todos os celulares da
+mesa somam na mesma conta, e só o dono fecha.
+
+Duas chaves precisam estar ligadas para o cliente ver o botão de pedir:
+
+| Chave | Quem muda | Onde |
+|---|---|---|
+| `pedidoNaMesa` | o dono | interruptor no painel, bloco "Pedido na mesa" |
+| `pedidoAte` | o administrador | mesmo bloco, campo de data (só aparece para o admin) |
+
+Sem `pedidoAte`, ou passada a data, o servidor recusa qualquer pedido novo —
+não adianta o que estiver aberto no celular de quem for. Desligado, o cardápio
+fica exatamente como era antes: o cliente só vê os pratos.
+
+O dono cadastra as mesas no painel e baixa o **cartaz com o QR** de cada uma.
+"Caixa do dia" soma as comandas fechadas de hoje: total, ticket médio, o que
+mais saiu e a conta de cada mesa. É controle interno, não documento fiscal.
+
+**Atenção:** depois de mexer em `firestore.rules`, publique no console do
+Firebase, senão o pedido na mesa não funciona (e o cardápio continua normal).
+
 ## Ao publicar uma mudança no código
 
 O GitHub Pages manda o navegador guardar os arquivos por 10 minutos. Ao mexer
-em `app.js` ou `config.js`, **suba o número de versão** nos `<script>` do
+em `app.js`, `mesa.js`, `mesa.css` ou `config.js`, **suba o número de versão** nos `<script>` do
 `index.html` (`app.js?v=2` → `app.js?v=3`): com o endereço novo, o navegador
 baixa o arquivo de novo na hora. Mudanças feitas pelo painel do dono não
 precisam disso — elas vêm do banco.

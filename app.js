@@ -139,7 +139,7 @@
     const garrafa = it.foto
       ? `<span class="garrafa"><img src="${esc(it.foto)}" alt="${esc(it.nome)}" loading="lazy"></span>`
       : (comFoto ? `<span class="garrafa vazia" aria-hidden="true"></span>` : "");
-    return `<div class="drink${it.esgotado ? " fora" : ""}">
+    return `<div class="drink${it.esgotado ? " fora" : ""}" data-item="${esc(it.id)}">
       ${garrafa}
       <span class="drink-name">${esc(it.nome)}</span>
       ${it.esgotado ? `<span class="selo-esgotado selo-bebida">Esgotado hoje</span>` : ""}
@@ -206,6 +206,7 @@
     document.getElementById("contato").innerHTML = contato;
 
     ligarScrollspy();
+    if (window.PEDIDOS) window.PEDIDOS.aposCliente();
   }
 
   /* ---------------- ampliar foto ---------------- */
@@ -264,6 +265,14 @@
   const refRest = db.collection("restaurantes").doc(SLUG);
   const refItens = refRest.collection("itens");
   const refAcesso = refRest.collection("privado").doc("acesso");
+
+  // Ponte para o pedido na mesa (mesa.js). O módulo é opcional: sem ele, o
+  // cardápio funciona exatamente como antes.
+  window.CARDAPIO = {
+    cfg: CFG, db, auth, refRest, esc, avisar,
+    dados: () => dados,
+    ehDono: () => ehDono
+  };
 
   const painel = document.getElementById("admin");
   const tranca = document.getElementById("tranca");
@@ -594,6 +603,7 @@
     corpoAdmin.innerHTML = html;
     desenharQR();
     marcarSujo();
+    if (window.PEDIDOS) window.PEDIDOS.aposAdmin(corpoAdmin);
   }
 
   function desenharQR(){
