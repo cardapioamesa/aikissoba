@@ -83,8 +83,9 @@
   let carrinho = [];                   // [{id, nome, preco, qtd, obs}]
   let meuNome = lembrar("mesa-nome");
   let enviando = false;
-  let folhaAberta = null;              // "item" | "comanda"
+  let folhaAberta = null;              // "item" | "comanda" | "cartaz"
   let itemAberto = null;
+  let cartaz = null;                   // { url, blob, nome, arquivo } do cartaz na tela
 
   let comSom = lembrar("mesa-som") !== "0";
   let corpoPainel = null;              // onde o painel do dono desenha
@@ -159,6 +160,7 @@
     folhaAberta = null; itemAberto = null;
     folha.hidden = true;
     document.body.classList.remove("sem-rolagem");
+    if (cartaz){ try { URL.revokeObjectURL(cartaz.url); } catch (e) {} cartaz = null; }
   }
 
   function itemDoCardapio(id){
@@ -170,7 +172,7 @@
     const ativo = clienteAtivo();
     barra.hidden = !ativo;
     document.body.classList.toggle("com-mesa", ativo);
-    if (!ativo){ if (folhaAberta) fecharFolha(); return; }
+    if (!ativo){ if (folhaAberta && folhaAberta !== "cartaz") fecharFolha(); return; }
 
     document.getElementById("mesa-chip").textContent = "Mesa " + nomeMesa();
     const qtd = carrinho.reduce((s, i) => s + i.qtd, 0);
@@ -193,7 +195,27 @@
   function pintarFolha(){
     if (folhaAberta === "item") folha.innerHTML = folhaItem();
     else if (folhaAberta === "comanda") folha.innerHTML = folhaComanda();
+    else if (folhaAberta === "cartaz") folha.innerHTML = folhaCartaz();
   }
+
+  // O cartaz aparece na tela em vez de baixar direto: no iPhone o download de
+  // imagem gerada não funciona, e daqui dá para salvar, compartilhar ou imprimir.
+  function folhaCartaz(){
+    if (!cartaz) return "";
+    return `<div class="mesa-caixa" role="dialog" aria-modal="true" aria-label="Cartaz da mesa">
+      <button class="mesa-x" type="button" data-mesa-acao="fechar-folha" aria-label="Fechar">&times;</button>
+      <h3>Cartaz da mesa ${esc(cartaz.nome)}</h3>
+      <p class="mesa-desc">Imprima e deixe na mesa. Quem apontar a câmera cai no cardápio já nesta mesa.</p>
+      <img class="mesa-cartaz" src="${esc(cartaz.url)}" alt="Cartaz com o QR Code da mesa ${esc(cartaz.nome)}">
+      <div class="mesa-botoes">
+        <button class="mesa-bt forte" type="button" data-mesa-acao="salvar-cartaz">${podeCompartilhar() ? "Salvar na galeria" : "Baixar o cartaz"}</button>
+        <button class="mesa-bt" type="button" data-mesa-acao="imprimir-cartaz">Imprimir</button>
+      </div>
+      <p class="mesa-dica">Abre o menu do celular: escolha <strong>Salvar imagem</strong> (ou Adicionar às Fotos) e o cartaz vai para a galeria. Tocar e segurar na imagem acima faz o mesmo.</p>
+    </div>`;
+  }
+
+  const podeCompartilhar = () => !!(navigator.canShare && window.File);
 
   function folhaItem(){
     const it = itemAberto && itemDoCardapio(itemAberto.id);
@@ -296,6 +318,8 @@
       return;
     }
     if (acao === "ver-comanda"){ abrirFolha("comanda"); return; }
+    if (acao === "salvar-cartaz"){ salvarCartaz(); return; }
+    if (acao === "imprimir-cartaz"){ imprimirCartaz(); return; }
     if (acao === "enviar"){ enviarPedido(); return; }
     if (acao === "pedir-conta"){
       try {
@@ -768,13 +792,70 @@
       g.font = "22px Arial, sans-serif";
       g.fillText("Cardápio à Mesa", 380, 1000);
       oculto.remove();
-
-      const a = document.createElement("a");
-      a.href = c.toDataURL("image/png");
-      a.download = "mesa-" + m.id + ".png";
-      document.body.appendChild(a); a.click(); a.remove();
-      API.avisar("Cartaz da mesa " + (m.nome || m.id) + " baixado.");
+      mostrarCartaz(c, m);
     }, 80);
+  }
+
+  // O cartaz vai para a tela: no celular, baixar imagem feita na hora não
+  // funciona (o iPhone ignora), mas dali dá para salvar, compartilhar ou imprimir.
+  function mostrarCartaz(c, m){
+    const nome = String(m.nome || m.id);
+    const arquivo = "mesa-" + m.id + ".png";
+    // Monta o arquivo na hora, sem toBlob: assim funciona igual em todo
+    // navegador e nada fica esperando um aviso que pode não vir.
+    try {
+      const base = c.toDataURL("image/png").split(",")[1];
+      const bin = atob(base), arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      const blob = new Blob([arr], { type: "image/png" });
+      if (cartaz){ try { URL.revokeObjectURL(cartaz.url); } catch (e) {} }
+      cartaz = { url: URL.createObjectURL(blob), blob: blob, nome: nome, arquivo: arquivo };
+      abrirFolha("cartaz");
+    } catch (e) {
+      API.avisar("Não deu para montar o cartaz neste aparelho.", true);
+    }
+  }
+
+  async function salvarCartaz(){
+    if (!cartaz) return;
+    const titulo = "Cartaz da mesa " + cartaz.nome;
+    if (podeCompartilhar()){
+      try {
+        const f = new File([cartaz.blob], cartaz.arquivo, { type: "image/png" });
+        if (navigator.canShare({ files: [f] })){
+          await navigator.share({ files: [f], title: titulo });
+          return;
+        }
+      } catch (e) {
+        if (e && e.name === "AbortError") return;   // a pessoa fechou o menu
+      }
+    }
+    const a = document.createElement("a");
+    a.href = cartaz.url;
+    a.download = cartaz.arquivo;
+    document.body.appendChild(a); a.click(); a.remove();
+    API.avisar("Cartaz salvo nos downloads do aparelho.");
+  }
+
+  function imprimirCartaz(){
+    if (!cartaz) return;
+    const moldura = document.createElement("iframe");
+    moldura.style.cssText = "position:fixed;left:-9999px;top:0;width:600px;height:800px;border:0";
+    document.body.appendChild(moldura);
+    const d = moldura.contentDocument;
+    d.open();
+    d.write('<!doctype html><title>' + esc(cartaz.arquivo) + '</title>' +
+            '<style>@page{margin:12mm}body{margin:0}img{width:100%}</style>' +
+            '<img src="' + cartaz.url + '">');
+    d.close();
+    const imprimir = () => {
+      try { moldura.contentWindow.focus(); moldura.contentWindow.print(); }
+      catch (e) { API.avisar("Seu navegador não deixou imprimir. Salve a imagem e imprima por ela.", true); }
+      setTimeout(() => moldura.remove(), 1500);
+    };
+    const img = d.querySelector("img");
+    if (img && !img.complete) img.onload = imprimir;
+    else setTimeout(imprimir, 120);
   }
 
   /* ---------------- partida ---------------- */

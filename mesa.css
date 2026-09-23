@@ -32,7 +32,7 @@ body.sem-rolagem{ overflow:hidden }
 
 /* ---------- folha que sobe ---------- */
 .mesa-folha{
-  position:fixed; inset:0; z-index:80; background:rgba(8,6,5,.72);
+  position:fixed; inset:0; z-index:120; background:rgba(8,6,5,.72);
   display:flex; align-items:flex-end; justify-content:center; padding:16px;
 }
 .mesa-caixa{
@@ -152,6 +152,14 @@ body.sem-rolagem{ overflow:hidden }
 .mesa-caixa-total b{
   margin-left:auto; font-family:var(--display); font-size:23px; color:var(--dashi); white-space:nowrap;
 }
+
+/* cartaz da mesa, para salvar ou imprimir */
+.mesa-cartaz{
+  width:100%; height:auto; border-radius:14px; background:#fff; margin:6px 0 4px;
+}
+.mesa-dica{ margin:10px 0 0; color:var(--ash-dim); font-size:13px; line-height:1.45 }
+.mesa-botoes{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap }
+.mesa-botoes .mesa-bt{ flex:1 1 140px; text-align:center; padding:13px }
 
 @media (min-width:760px){
   .mesa-folha{ align-items:center }
